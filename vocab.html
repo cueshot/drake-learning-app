@@ -1,0 +1,706 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Vocabulary – Sensei</title>
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#14B8A6">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="Sensei">
+    <link rel="apple-touch-icon" href="icon.svg">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: #F5F5F4;
+            min-height: 100vh;
+            padding-bottom: 72px;
+        }
+
+        /* ── Header ── */
+        .header {
+            background: white;
+            border-bottom: 1px solid #E7E5E4;
+            padding: 12px 16px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            position: sticky;
+            top: 0;
+            z-index: 20;
+            box-shadow: 0 1px 4px rgba(0,0,0,0.06);
+        }
+
+        .header-left {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .avatar {
+            width: 38px;
+            height: 38px;
+            background: linear-gradient(135deg, #14B8A6 0%, #0D9488 100%);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 15px;
+            font-weight: 700;
+            color: white;
+            flex-shrink: 0;
+        }
+
+        .header-title {
+            font-size: 16px;
+            font-weight: 700;
+            color: #1C1917;
+            line-height: 1.1;
+        }
+
+        .header-sub {
+            font-size: 11.5px;
+            color: #A8A29E;
+        }
+
+        .reset-btn {
+            background: transparent;
+            border: 1.5px solid #E7E5E4;
+            color: #78716C;
+            padding: 6px 13px;
+            border-radius: 18px;
+            font-size: 12.5px;
+            font-family: inherit;
+            cursor: pointer;
+            transition: border-color 0.18s, color 0.18s;
+        }
+
+        .reset-btn:hover {
+            border-color: #A8A29E;
+            color: #1C1917;
+        }
+
+        /* ── Topic tabs ── */
+        .tab-strip {
+            background: white;
+            border-bottom: 1px solid #E7E5E4;
+            display: flex;
+            overflow-x: auto;
+            -webkit-overflow-scrolling: touch;
+            scrollbar-width: none;
+            position: sticky;
+            top: 62px;
+            z-index: 19;
+        }
+
+        .tab-strip::-webkit-scrollbar { display: none; }
+
+        .tab {
+            flex: 1;
+            min-width: 90px;
+            padding: 13px 8px;
+            background: transparent;
+            border: none;
+            border-bottom: 2.5px solid transparent;
+            font-family: inherit;
+            font-size: 14px;
+            font-weight: 500;
+            color: #A8A29E;
+            cursor: pointer;
+            white-space: nowrap;
+            transition: color 0.18s, border-color 0.18s;
+        }
+
+        .tab.active {
+            color: #14B8A6;
+            border-bottom-color: #14B8A6;
+        }
+
+        .tab:hover:not(.active) { color: #78716C; }
+
+        /* ── Progress ── */
+        .progress-section {
+            padding: 14px 16px 10px;
+        }
+
+        .progress-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: baseline;
+            margin-bottom: 7px;
+        }
+
+        .progress-label {
+            font-size: 13.5px;
+            font-weight: 500;
+            color: #1C1917;
+        }
+
+        .progress-pct {
+            font-size: 13px;
+            font-weight: 600;
+            color: #14B8A6;
+        }
+
+        .progress-track {
+            height: 7px;
+            background: #E7E5E4;
+            border-radius: 4px;
+            overflow: hidden;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #14B8A6, #0D9488);
+            border-radius: 4px;
+            transition: width 0.45s ease;
+        }
+
+        /* ── Card grid ── */
+        .card-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 12px;
+            padding: 4px 16px 20px;
+            align-items: start;
+        }
+
+        @media (min-width: 600px)  { .card-grid { grid-template-columns: repeat(3, 1fr); } }
+        @media (min-width: 900px)  { .card-grid { grid-template-columns: repeat(4, 1fr); } }
+
+        /* ── Word card wrapper ── */
+        .word-card {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        /* ── 3D flip scene ── */
+        .card-scene {
+            perspective: 900px;
+            width: 100%;
+            height: 168px;
+            cursor: pointer;
+            -webkit-tap-highlight-color: transparent;
+            user-select: none;
+        }
+
+        .card-inner {
+            width: 100%;
+            height: 100%;
+            position: relative;
+            transform-style: preserve-3d;
+            -webkit-transform-style: preserve-3d;
+            transition: transform 0.52s cubic-bezier(0.4, 0.2, 0.2, 1);
+        }
+
+        .card-scene.flipped .card-inner {
+            transform: rotateY(180deg);
+            -webkit-transform: rotateY(180deg);
+        }
+
+        .card-face {
+            position: absolute;
+            inset: 0;
+            border-radius: 14px;
+            backface-visibility: hidden;
+            -webkit-backface-visibility: hidden;
+            overflow: hidden;
+        }
+
+        /* ── Front face ── */
+        .card-face.front {
+            background: white;
+            border: 1.5px solid #E7E5E4;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 14px 12px;
+            gap: 8px;
+            transition: background 0.3s, border-color 0.3s;
+        }
+
+        .word-card.known   .card-face.front { background: #F0FDFA; border-color: #99F6E4; }
+        .word-card.learning .card-face.front { background: #FAFAF9; border-color: #D6D3D1; }
+
+        .status-badge {
+            position: absolute;
+            top: 8px;
+            right: 8px;
+            font-size: 10px;
+            font-weight: 700;
+            padding: 3px 7px;
+            border-radius: 10px;
+            letter-spacing: 0.02em;
+        }
+
+        .status-badge.known    { background: #CCFBF1; color: #0F766E; }
+        .status-badge.learning { background: #F0EFEE; color: #78716C; }
+
+        .english-word {
+            font-size: 21px;
+            font-weight: 700;
+            color: #1C1917;
+            text-align: center;
+            line-height: 1.2;
+            word-break: break-word;
+        }
+
+        .flip-hint {
+            font-size: 10.5px;
+            color: #C7C3C0;
+            letter-spacing: 0.03em;
+        }
+
+        /* ── Speak button ── */
+        .speak-btn {
+            position: absolute;
+            bottom: 7px;
+            right: 7px;
+            width: 26px;
+            height: 26px;
+            background: transparent;
+            border: none;
+            border-radius: 7px;
+            font-size: 14px;
+            line-height: 1;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: background 0.15s, transform 0.12s;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        .speak-btn:hover  { background: #F0FDFA; transform: scale(1.18); }
+        .speak-btn:active { transform: scale(0.95); }
+
+        .speak-btn.speaking {
+            animation: speakPulse 0.55s ease-in-out infinite;
+        }
+
+        @keyframes speakPulse {
+            0%, 100% { transform: scale(1);    opacity: 1;    }
+            50%       { transform: scale(1.25); opacity: 0.7;  }
+        }
+
+        /* ── Back face ── */
+        .card-face.back {
+            background: white;
+            border: 1.5px solid #E7E5E4;
+            transform: rotateY(180deg);
+            -webkit-transform: rotateY(180deg);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            padding: 14px 13px;
+            gap: 6px;
+        }
+
+        .japanese-text {
+            font-size: 21px;
+            font-weight: 700;
+            color: #14B8A6;
+            line-height: 1.3;
+            word-break: break-word;
+        }
+
+        .example-sentence {
+            font-size: 11.5px;
+            color: #57534E;
+            line-height: 1.5;
+            font-style: italic;
+        }
+
+        .pronunciation {
+            font-size: 11px;
+            color: #A8A29E;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            letter-spacing: 0.03em;
+        }
+
+        /* ── Action buttons ── */
+        .card-actions {
+            display: none;
+            gap: 7px;
+        }
+
+        .card-actions.visible { display: flex; }
+
+        .know-btn {
+            flex: 1;
+            background: #14B8A6;
+            color: white;
+            border: none;
+            border-radius: 10px;
+            padding: 9px 4px;
+            font-family: inherit;
+            font-size: 12.5px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background 0.18s, transform 0.12s;
+        }
+
+        .know-btn:hover  { background: #0D9488; transform: translateY(-1px); }
+        .know-btn:active { transform: translateY(0); }
+
+        .learning-btn {
+            flex: 1;
+            background: #F5F5F4;
+            color: #78716C;
+            border: 1.5px solid #E7E5E4;
+            border-radius: 10px;
+            padding: 9px 4px;
+            font-family: inherit;
+            font-size: 12.5px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: background 0.18s, border-color 0.18s, transform 0.12s;
+        }
+
+        .learning-btn:hover  { background: #ECEAE8; border-color: #D6D3D1; transform: translateY(-1px); }
+        .learning-btn:active { transform: translateY(0); }
+
+        /* ── Bottom navigation ── */
+        .bottom-nav {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            height: 64px;
+            background: white;
+            border-top: 1px solid #E7E5E4;
+            display: flex;
+            z-index: 30;
+            box-shadow: 0 -1px 8px rgba(0,0,0,0.05);
+        }
+
+        .nav-item {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 4px;
+            text-decoration: none;
+            color: #A8A29E;
+            font-size: 11px;
+            font-weight: 500;
+            transition: color 0.18s;
+        }
+
+        .nav-item.active { color: #14B8A6; }
+        .nav-item:hover:not(.active) { color: #78716C; }
+
+        .nav-icon {
+            width: 22px;
+            height: 22px;
+        }
+
+        /* ── Dark mode toggle button ── */
+        .dark-toggle-btn {
+            width: 34px; height: 34px;
+            border-radius: 50%;
+            border: 1.5px solid #E7E5E4;
+            background: transparent;
+            cursor: pointer;
+            display: flex; align-items: center; justify-content: center;
+            color: #78716C;
+            flex-shrink: 0; padding: 0;
+            transition: background 0.18s, border-color 0.18s, color 0.18s;
+        }
+        .dark-toggle-btn:hover { background: #F0EDEC; border-color: #A8A29E; }
+        [data-theme="dark"] .dark-toggle-btn { border-color: #4D4D6C; color: #B0B0C8; }
+        [data-theme="dark"] .dark-toggle-btn:hover { background: #3D3D5C; }
+
+        /* ── Dark mode overrides ── */
+        [data-theme="dark"] body                         { background: #1A1A2E; }
+        [data-theme="dark"] .header                      { background: #2D2D44; border-color: #3D3D5C; box-shadow: 0 1px 4px rgba(0,0,0,0.3); }
+        [data-theme="dark"] .header-title                { color: #E5E5E5; }
+        [data-theme="dark"] .header-sub                  { color: #8888A8; }
+        [data-theme="dark"] .reset-btn                   { border-color: #4D4D6C; color: #B0B0C8; }
+        [data-theme="dark"] .reset-btn:hover             { border-color: #8888A8; color: #E5E5E5; }
+        [data-theme="dark"] .tab-strip                   { background: #2D2D44; border-color: #3D3D5C; }
+        [data-theme="dark"] .tab                         { color: #8888A8; }
+        [data-theme="dark"] .tab:hover:not(.active)      { color: #B0B0C8; }
+        [data-theme="dark"] .progress-label              { color: #E5E5E5; }
+        [data-theme="dark"] .progress-track              { background: #3D3D5C; }
+        [data-theme="dark"] .card-face.front,
+        [data-theme="dark"] .card-face.back              { background: #2D2D44; border-color: #3D3D5C; }
+        [data-theme="dark"] .word-card.known .card-face.front    { background: #1A3535; border-color: #1A6060; }
+        [data-theme="dark"] .word-card.learning .card-face.front { background: #28283E; border-color: #4D4D6C; }
+        [data-theme="dark"] .status-badge.known          { background: #0D4040; color: #2DD4BF; }
+        [data-theme="dark"] .status-badge.learning       { background: #38385A; color: #A0A0C8; }
+        [data-theme="dark"] .english-word                { color: #E5E5E5; }
+        [data-theme="dark"] .flip-hint                   { color: #6666A0; }
+        [data-theme="dark"] .example-sentence            { color: #B0B0C8; }
+        [data-theme="dark"] .pronunciation               { color: #8888A8; }
+        [data-theme="dark"] .speak-btn                   { color: #8888A8; }
+        [data-theme="dark"] .speak-btn:hover             { background: #1A3535; }
+        [data-theme="dark"] .learning-btn                { background: #3D3D5C; border-color: #4D4D6C; color: #B0B0C8; }
+        [data-theme="dark"] .learning-btn:hover          { background: #4D4D6C; border-color: #6D6D9C; }
+        [data-theme="dark"] .bottom-nav                  { background: #2D2D44; border-color: #3D3D5C; }
+        [data-theme="dark"] .nav-item                    { color: #8888A8; }
+        [data-theme="dark"] .nav-item:hover:not(.active) { color: #B0B0C8; }
+    </style>
+    <script>if(localStorage.getItem('sensei_dark_mode')==='dark')document.documentElement.setAttribute('data-theme','dark');</script>
+</head>
+<body>
+
+<header class="header">
+    <div class="header-left">
+        <div class="avatar">S</div>
+        <div>
+            <div class="header-title">Sensei</div>
+            <div class="header-sub">Vocabulary Practice</div>
+        </div>
+    </div>
+    <div style="display:flex;align-items:center;gap:8px;">
+        <button id="darkToggle" class="dark-toggle-btn" onclick="toggleDarkMode()" title="Toggle dark mode"></button>
+        <button class="reset-btn" onclick="resetTopic()">Reset ↺</button>
+    </div>
+</header>
+
+<div class="tab-strip">
+    <button class="tab active" onclick="switchTab('greetings', this)">Greetings</button>
+    <button class="tab" onclick="switchTab('food', this)">Food</button>
+    <button class="tab" onclick="switchTab('travel', this)">Travel</button>
+    <button class="tab" onclick="switchTab('business', this)">Business</button>
+</div>
+
+<div class="progress-section">
+    <div class="progress-header">
+        <span class="progress-label" id="progressLabel">0 of 6 words known</span>
+        <span class="progress-pct" id="progressPct">0%</span>
+    </div>
+    <div class="progress-track">
+        <div class="progress-fill" id="progressFill" style="width: 0%"></div>
+    </div>
+</div>
+
+<main class="card-grid" id="cardGrid"></main>
+
+<nav class="bottom-nav">
+    <a href="index.html" class="nav-item">
+        <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
+        </svg>
+        Chat
+    </a>
+    <a href="vocab.html" class="nav-item active">
+        <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <rect x="2" y="3" width="20" height="14" rx="2"/>
+            <line x1="8" y1="21" x2="16" y2="21"/>
+            <line x1="12" y1="17" x2="12" y2="21"/>
+        </svg>
+        Vocabulary
+    </a>
+</nav>
+
+<script>
+    const VOCAB = {
+        greetings: [
+            { en: 'Hello',        ja: 'こんにちは',         example: 'Hello, nice to meet you!',           pron: 'kon · ni · chi · wa'          },
+            { en: 'Thank you',    ja: 'ありがとう',         example: 'Thank you so much for your help.',   pron: 'a · ri · ga · toh'             },
+            { en: 'Goodbye',      ja: 'さようなら',         example: 'Goodbye! See you next time.',        pron: 'sa · yoh · na · ra'            },
+            { en: 'Excuse me',    ja: 'すみません',         example: 'Excuse me, where is the station?',  pron: 'su · mi · ma · sen'            },
+            { en: 'Please',       ja: 'お願いします',       example: 'One coffee, please.',                pron: 'o · ne · gai · shi · mas'      },
+            { en: 'Good morning', ja: 'おはようございます', example: 'Good morning! Did you sleep well?',  pron: 'o · ha · yoh · go · za · i · mas' },
+        ],
+        food: [
+            { en: 'Delicious',  ja: 'おいしい',     example: 'This ramen is absolutely delicious!', pron: 'o · i · shi · i'   },
+            { en: 'Restaurant', ja: 'レストラン',   example: "Let's go to a restaurant tonight.",   pron: 'res · to · ran'    },
+            { en: 'Menu',       ja: 'メニュー',     example: 'Can I see the menu, please?',         pron: 'me · nyuu'         },
+            { en: 'Water',      ja: 'お水',         example: 'Can I have some water, please?',      pron: 'o · mi · zu'       },
+            { en: 'Rice',       ja: 'ご飯',         example: 'I eat rice every day for lunch.',     pron: 'go · han'          },
+            { en: 'Tea',        ja: 'お茶',         example: 'Would you like some green tea?',      pron: 'o · cha'           },
+            { en: 'Chopsticks', ja: 'お箸',         example: 'I am learning to use chopsticks.',    pron: 'o · ha · shi'      },
+        ],
+        travel: [
+            { en: 'Station',  ja: '駅',          example: 'The train station is near the hotel.', pron: 'e · ki'           },
+            { en: 'Ticket',   ja: 'チケット',    example: 'I need to buy a train ticket.',        pron: 'chi · ket · to'   },
+            { en: 'Hotel',    ja: 'ホテル',      example: 'Our hotel has a beautiful view.',      pron: 'ho · te · ru'     },
+            { en: 'Airport',  ja: '空港',        example: 'The airport is one hour from here.',   pron: 'kuu · koh'        },
+            { en: 'Map',      ja: '地図',        example: 'Do you have a map of the city?',       pron: 'chi · zu'         },
+            { en: 'Train',    ja: '電車',        example: 'The train arrives at 9 am.',           pron: 'den · sha'        },
+            { en: 'Passport', ja: 'パスポート',  example: 'Please show me your passport.',        pron: 'pa · su · poh · to' },
+        ],
+        business: [
+            { en: 'Meeting',      ja: '会議',         example: "We have a meeting at 10 o'clock.",  pron: 'kai · gi'          },
+            { en: 'Schedule',     ja: 'スケジュール', example: 'Let me check my schedule first.',   pron: 'su · ke · juu · ru' },
+            { en: 'Email',        ja: 'メール',       example: 'Please send me an email today.',    pron: 'mee · ru'          },
+            { en: 'Report',       ja: 'レポート',     example: 'I finished the report this morning.', pron: 're · poh · to'  },
+            { en: 'Client',       ja: 'クライアント', example: 'Our client is visiting tomorrow.',  pron: 'ku · ra · i · an · to' },
+            { en: 'Presentation', ja: 'プレゼン',     example: 'Her presentation was very clear.',  pron: 'pu · re · zen'     },
+            { en: 'Colleague',    ja: '同僚',         example: 'My colleague is very experienced.', pron: 'doh · ryoh'        },
+        ]
+    };
+
+    let currentTopic = 'greetings';
+
+    const storeKey = (topic, i) => `sensei_vocab_${topic}_${i}`;
+    const getStatus = (topic, i) => localStorage.getItem(storeKey(topic, i));
+    const setStatus = (topic, i, v) => localStorage.setItem(storeKey(topic, i), v);
+    const clearStatus = (topic, i) => localStorage.removeItem(storeKey(topic, i));
+
+    function buildCard(topic, index) {
+        const word   = VOCAB[topic][index];
+        const status = getStatus(topic, index);
+
+        const wrapper = document.createElement('div');
+        wrapper.className = `word-card${status ? ' resolved ' + status : ''}`;
+        wrapper.dataset.topic = topic;
+        wrapper.dataset.index = index;
+
+        const badge = status === 'known'
+            ? '<div class="status-badge known">✓ Known</div>'
+            : status === 'learning'
+            ? '<div class="status-badge learning">↺ Reviewing</div>'
+            : '';
+
+        wrapper.innerHTML = `
+            <div class="card-scene" onclick="handleFlip(this)">
+                <div class="card-inner">
+                    <div class="card-face front">
+                        ${badge}
+                        <div class="english-word">${word.en}</div>
+                        <div class="flip-hint">tap to flip</div>
+                        <button class="speak-btn" data-word="${word.en}" onclick="speakWord(this);event.stopPropagation();" title="Listen">🔊</button>
+                    </div>
+                    <div class="card-face back">
+                        <div class="japanese-text">${word.ja}</div>
+                        <div class="example-sentence">"${word.example}"</div>
+                        <div class="pronunciation">🔊 ${word.pron}</div>
+                    </div>
+                </div>
+            </div>
+            <div class="card-actions">
+                <button class="know-btn"     onclick="markCard(this,'known')">Know It ✓</button>
+                <button class="learning-btn" onclick="markCard(this,'learning')">Still Learning</button>
+            </div>`;
+
+        return wrapper;
+    }
+
+    function speakWord(btn) {
+        const word = btn.dataset.word;
+        window.speechSynthesis.cancel();
+        const utter = new SpeechSynthesisUtterance(word);
+        utter.lang  = 'en-US';
+        utter.rate  = 0.85;
+        btn.classList.add('speaking');
+        utter.onend  = () => btn.classList.remove('speaking');
+        utter.onerror = () => btn.classList.remove('speaking');
+        window.speechSynthesis.speak(utter);
+    }
+
+    // Weight: learning=0, unseen=1, known=2. Adding Math.random() shuffles within
+    // each group every session while keeping section order strictly guaranteed.
+    const statusWeight = s => s === 'learning' ? 0 : s === 'known' ? 2 : 1;
+
+    function renderCards(topic) {
+        const grid = document.getElementById('cardGrid');
+        grid.innerHTML = '';
+        VOCAB[topic]
+            .map((_, i) => ({ i, key: statusWeight(getStatus(topic, i)) + Math.random() }))
+            .sort((a, b) => a.key - b.key)
+            .forEach(({ i }) => grid.appendChild(buildCard(topic, i)));
+    }
+
+    function handleFlip(scene) {
+        scene.classList.toggle('flipped');
+        const actions = scene.closest('.word-card').querySelector('.card-actions');
+        actions.classList.toggle('visible', scene.classList.contains('flipped'));
+    }
+
+    function markCard(btn, result) {
+        const card  = btn.closest('.word-card');
+        const topic = card.dataset.topic;
+        const index = parseInt(card.dataset.index, 10);
+
+        setStatus(topic, index, result);
+        localStorage.setItem('sensei_last_studied_topic', topic);
+
+        const grid    = document.getElementById('cardGrid');
+        const updated = buildCard(topic, index);
+        card.remove();
+
+        if (result === 'learning') {
+            // Still Learning → front of queue (will be seen again soonest)
+            grid.prepend(updated);
+            updated.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        } else {
+            // Known → back of queue (3x less prominent than learning cards)
+            grid.appendChild(updated);
+        }
+
+        updateProgress(topic);
+    }
+
+    function updateProgress(topic) {
+        const total = VOCAB[topic].length;
+        const known = VOCAB[topic].filter((_, i) => getStatus(topic, i) === 'known').length;
+        const pct   = total ? Math.round((known / total) * 100) : 0;
+
+        document.getElementById('progressLabel').textContent = `${known} of ${total} words known`;
+        document.getElementById('progressPct').textContent   = `${pct}%`;
+        document.getElementById('progressFill').style.width  = `${pct}%`;
+    }
+
+    function switchTab(topic, tabEl) {
+        currentTopic = topic;
+        localStorage.setItem('sensei_last_studied_topic', topic);
+        document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+        tabEl.classList.add('active');
+        renderCards(topic);
+        updateProgress(topic);
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+
+    function resetTopic() {
+        VOCAB[currentTopic].forEach((_, i) => clearStatus(currentTopic, i));
+        renderCards(currentTopic);
+        updateProgress(currentTopic);
+    }
+
+    renderCards('greetings');
+    updateProgress('greetings');
+
+    /* ── Dark mode ── */
+    const MOON_SVG = `<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>`;
+    const SUN_SVG  = `<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="5"/><line x1="12" y1="2" x2="12" y2="4"/><line x1="12" y1="20" x2="12" y2="22"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="2" y1="12" x2="4" y2="12"/><line x1="20" y1="12" x2="22" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg>`;
+
+    function toggleDarkMode() {
+        const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
+        if (isDark) {
+            document.documentElement.removeAttribute('data-theme');
+            localStorage.setItem('sensei_dark_mode', 'light');
+        } else {
+            document.documentElement.setAttribute('data-theme', 'dark');
+            localStorage.setItem('sensei_dark_mode', 'dark');
+        }
+        syncDarkModeIcon();
+    }
+
+    function syncDarkModeIcon() {
+        const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
+        const btn = document.getElementById('darkToggle');
+        if (btn) btn.innerHTML = isDark ? SUN_SVG : MOON_SVG;
+    }
+
+    syncDarkModeIcon();
+</script>
+<script>
+    if ('serviceWorker' in navigator) {
+        navigator.serviceWorker.register('./sw.js').catch(() => {});
+    }
+</script>
+</body>
+</html>

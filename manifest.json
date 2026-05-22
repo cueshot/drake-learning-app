@@ -1,0 +1,47 @@
+{
+    "name": "Sensei English",
+    "short_name": "Sensei",
+    "description": "Learn English with your personal AI tutor. Practice vocabulary flashcards and chat with Sensei.",
+    "start_url": "./vocab.html",
+    "scope": "./",
+    "display": "standalone",
+    "orientation": "portrait-primary",
+    "background_color": "#F5F5F4",
+    "theme_color": "#14B8A6",
+    "lang": "en-US",
+    "categories": ["education"],
+    "icons": [
+        {
+            "src": "icon.svg",
+            "sizes": "any",
+            "type": "image/svg+xml",
+            "purpose": "any"
+        },
+        {
+            "src": "icon.svg",
+            "sizes": "any",
+            "type": "image/svg+xml",
+            "purpose": "maskable"
+        }
+    ],
+    "shortcuts": [
+        {
+            "name": "Vocabulary",
+            "short_name": "Vocab",
+            "url": "./vocab.html",
+            "description": "Practice vocabulary flashcards offline"
+        },
+        {
+            "name": "Chat with Sensei",
+            "short_name": "Chat",
+            "url": "./index.html",
+            "description": "Practice English conversation"
+        },
+        {
+            "name": "Dashboard",
+            "short_name": "Home",
+            "url": "./dashboard.html",
+            "description": "View your learning progress"
+        }
+    ]
+}

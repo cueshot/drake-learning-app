@@ -1,0 +1,772 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sensei – English Tutor</title>
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#14B8A6">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="Sensei">
+    <link rel="apple-touch-icon" href="icon.svg">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: #F5F5F4;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        /* ── Header ── */
+        .header {
+            background: white;
+            border-bottom: 1px solid #E7E5E4;
+            padding: 12px 16px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            flex-shrink: 0;
+            box-shadow: 0 1px 4px rgba(0, 0, 0, 0.06);
+            z-index: 10;
+        }
+
+        .tutor-info {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .avatar {
+            width: 42px;
+            height: 42px;
+            background: linear-gradient(135deg, #14B8A6 0%, #0D9488 100%);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 17px;
+            font-weight: 700;
+            color: white;
+            flex-shrink: 0;
+        }
+
+        .tutor-meta {
+            display: flex;
+            flex-direction: column;
+            gap: 2px;
+        }
+
+        .tutor-name {
+            font-size: 16px;
+            font-weight: 600;
+            color: #1C1917;
+            line-height: 1;
+        }
+
+        .online-status {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            font-size: 12px;
+            color: #78716C;
+        }
+
+        .online-dot {
+            width: 8px;
+            height: 8px;
+            background: #22C55E;
+            border-radius: 50%;
+            animation: statusPulse 2.4s ease-in-out infinite;
+        }
+
+        @keyframes statusPulse {
+            0%, 100% { opacity: 1; box-shadow: 0 0 0 0 rgba(34, 197, 94, 0.4); }
+            50% { opacity: 0.75; box-shadow: 0 0 0 4px rgba(34, 197, 94, 0); }
+        }
+
+        .new-convo-btn {
+            background: transparent;
+            border: 1.5px solid #14B8A6;
+            color: #14B8A6;
+            padding: 7px 15px;
+            border-radius: 20px;
+            font-size: 13px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: background 0.18s, color 0.18s;
+            white-space: nowrap;
+        }
+
+        .new-convo-btn:hover {
+            background: #14B8A6;
+            color: white;
+        }
+
+        /* ── Chat area ── */
+        .chat-container {
+            flex: 1;
+            overflow-y: auto;
+            padding: 16px 16px 8px;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            scroll-behavior: smooth;
+        }
+
+        .chat-container::-webkit-scrollbar { width: 4px; }
+        .chat-container::-webkit-scrollbar-track { background: transparent; }
+        .chat-container::-webkit-scrollbar-thumb { background: #D6D3D1; border-radius: 2px; }
+
+        /* ── Welcome / starters ── */
+        .welcome-section {
+            text-align: center;
+            padding: 28px 8px 4px;
+        }
+
+        .welcome-emoji {
+            font-size: 44px;
+            margin-bottom: 10px;
+            display: block;
+        }
+
+        .welcome-title {
+            font-size: 19px;
+            font-weight: 700;
+            color: #1C1917;
+            margin-bottom: 6px;
+        }
+
+        .welcome-subtitle {
+            font-size: 14px;
+            color: #78716C;
+            line-height: 1.55;
+            max-width: 300px;
+            margin: 0 auto;
+        }
+
+        .starters-wrapper {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 10px;
+            padding: 20px 0 8px;
+        }
+
+        .starters-label {
+            font-size: 13px;
+            font-weight: 500;
+            color: #A8A29E;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        .starters-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 8px;
+            width: 100%;
+            max-width: 420px;
+        }
+
+        .starter-btn {
+            background: white;
+            border: 1.5px solid #E7E5E4;
+            border-radius: 14px;
+            padding: 13px 14px;
+            font-size: 13.5px;
+            font-family: inherit;
+            color: #292524;
+            cursor: pointer;
+            text-align: left;
+            line-height: 1.4;
+            transition: border-color 0.18s, background 0.18s, color 0.18s;
+        }
+
+        .starter-btn:hover {
+            border-color: #14B8A6;
+            background: #F0FDFA;
+            color: #0D9488;
+        }
+
+        /* ── Message rows ── */
+        .message-row {
+            display: flex;
+            align-items: flex-end;
+            gap: 8px;
+        }
+
+        .message-row.student { justify-content: flex-end; }
+        .message-row.tutor   { justify-content: flex-start; }
+
+        .tutor-avatar-sm {
+            width: 28px;
+            height: 28px;
+            background: linear-gradient(135deg, #14B8A6 0%, #0D9488 100%);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 11px;
+            font-weight: 700;
+            color: white;
+            flex-shrink: 0;
+        }
+
+        .bubble {
+            max-width: 68%;
+            padding: 10px 14px;
+            font-size: 15px;
+            line-height: 1.55;
+            word-wrap: break-word;
+            white-space: pre-wrap;
+        }
+
+        .bubble.student {
+            background: #14B8A6;
+            color: white;
+            border-radius: 18px 18px 4px 18px;
+        }
+
+        .bubble.tutor {
+            background: white;
+            color: #1C1917;
+            border: 1px solid #E7E5E4;
+            border-radius: 18px 18px 18px 4px;
+        }
+
+        /* ── Typing indicator ── */
+        .typing-bubble {
+            background: white;
+            border: 1px solid #E7E5E4;
+            border-radius: 18px 18px 18px 4px;
+            padding: 12px 16px;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .typing-dot {
+            width: 7px;
+            height: 7px;
+            background: #A8A29E;
+            border-radius: 50%;
+            animation: dotBounce 1.3s ease-in-out infinite;
+        }
+
+        .typing-dot:nth-child(2) { animation-delay: 0.18s; }
+        .typing-dot:nth-child(3) { animation-delay: 0.36s; }
+
+        @keyframes dotBounce {
+            0%, 60%, 100% { transform: translateY(0); opacity: 0.5; }
+            30% { transform: translateY(-7px); opacity: 1; }
+        }
+
+        /* ── Input area ── */
+        .input-area {
+            background: white;
+            border-top: 1px solid #E7E5E4;
+            padding: 10px 14px;
+            display: flex;
+            align-items: flex-end;
+            gap: 10px;
+            flex-shrink: 0;
+        }
+
+        .input-field {
+            flex: 1;
+            border: 1.5px solid #E7E5E4;
+            border-radius: 22px;
+            padding: 10px 16px;
+            font-size: 15px;
+            font-family: inherit;
+            background: #FAFAF9;
+            color: #1C1917;
+            outline: none;
+            resize: none;
+            line-height: 1.45;
+            max-height: 110px;
+            overflow-y: auto;
+            transition: border-color 0.18s, background 0.18s;
+        }
+
+        .input-field:focus {
+            border-color: #14B8A6;
+            background: white;
+        }
+
+        .input-field::placeholder { color: #A8A29E; }
+
+        .input-field::-webkit-scrollbar { width: 3px; }
+        .input-field::-webkit-scrollbar-thumb { background: #D6D3D1; border-radius: 2px; }
+
+        .send-btn {
+            width: 42px;
+            height: 42px;
+            min-width: 42px;
+            background: #14B8A6;
+            border: none;
+            border-radius: 50%;
+            color: white;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: background 0.18s, transform 0.15s;
+            flex-shrink: 0;
+        }
+
+        .send-btn:hover:not(:disabled) {
+            background: #0D9488;
+            transform: scale(1.06);
+        }
+
+        .send-btn:disabled {
+            background: #D6D3D1;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .send-btn svg {
+            width: 18px;
+            height: 18px;
+            transform: translateX(1px);
+        }
+
+        /* ── Error toast ── */
+        .error-bubble {
+            background: #FEF2F2;
+            border: 1px solid #FECACA;
+            color: #B91C1C;
+            border-radius: 18px 18px 18px 4px;
+        }
+
+        /* ── Timeout bubble ── */
+        .timeout-bubble {
+            background: #FFFBEB;
+            border: 1px solid #FDE68A;
+            color: #92400E;
+            border-radius: 18px 18px 18px 4px;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .retry-btn {
+            align-self: flex-start;
+            background: #14B8A6;
+            color: white;
+            border: none;
+            border-radius: 12px;
+            padding: 7px 16px;
+            font-size: 13px;
+            font-family: inherit;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background 0.18s;
+        }
+
+        .retry-btn:hover { background: #0D9488; }
+
+        /* ── Dark mode toggle button ── */
+        .dark-toggle-btn {
+            width: 34px; height: 34px;
+            border-radius: 50%;
+            border: 1.5px solid #E7E5E4;
+            background: transparent;
+            cursor: pointer;
+            display: flex; align-items: center; justify-content: center;
+            color: #78716C;
+            flex-shrink: 0; padding: 0;
+            transition: background 0.18s, border-color 0.18s, color 0.18s;
+        }
+        .dark-toggle-btn:hover { background: #F0EDEC; border-color: #A8A29E; }
+        [data-theme="dark"] .dark-toggle-btn { border-color: #4D4D6C; color: #B0B0C8; }
+        [data-theme="dark"] .dark-toggle-btn:hover { background: #3D3D5C; }
+
+        /* ── Dark mode overrides ── */
+        [data-theme="dark"] body                { background: #1A1A2E; }
+        [data-theme="dark"] .header             { background: #2D2D44; border-color: #3D3D5C; }
+        [data-theme="dark"] .tutor-name         { color: #E5E5E5; }
+        [data-theme="dark"] .online-status      { color: #8888A8; }
+        [data-theme="dark"] .new-convo-btn      { border-color: #14B8A6; color: #14B8A6; }
+        [data-theme="dark"] .bubble.tutor       { background: #2D2D44; border-color: #3D3D5C; color: #E5E5E5; }
+        [data-theme="dark"] .typing-bubble      { background: #2D2D44; border-color: #3D3D5C; }
+        [data-theme="dark"] .typing-dot         { background: #6666A0; }
+        [data-theme="dark"] .welcome-title      { color: #E5E5E5; }
+        [data-theme="dark"] .welcome-subtitle   { color: #8888A8; }
+        [data-theme="dark"] .starters-label     { color: #8888A8; }
+        [data-theme="dark"] .starter-btn        { background: #2D2D44; border-color: #3D3D5C; color: #E5E5E5; }
+        [data-theme="dark"] .starter-btn:hover  { background: #3D3D5C; border-color: #14B8A6; color: #2DD4BF; }
+        [data-theme="dark"] .input-area         { background: #2D2D44; border-color: #3D3D5C; }
+        [data-theme="dark"] .input-field        { background: #1E1E35; border-color: #3D3D5C; color: #E5E5E5; }
+        [data-theme="dark"] .input-field:focus  { background: #252545; border-color: #14B8A6; }
+        [data-theme="dark"] .input-field::placeholder { color: #6666A0; }
+        [data-theme="dark"] .error-bubble       { background: #3D1A1A; border-color: #7D2A2A; color: #FFAAAA; }
+        [data-theme="dark"] .timeout-bubble     { background: #2A2010; border-color: #6D5020; color: #FFD080; }
+    </style>
+    <script>if(localStorage.getItem('sensei_dark_mode')==='dark')document.documentElement.setAttribute('data-theme','dark');</script>
+</head>
+<body>
+
+<!-- Header -->
+<div class="header">
+    <div class="tutor-info">
+        <div class="avatar">S</div>
+        <div class="tutor-meta">
+            <span class="tutor-name">Sensei</span>
+            <div class="online-status">
+                <div class="online-dot"></div>
+                Online
+            </div>
+        </div>
+    </div>
+    <div style="display:flex;align-items:center;gap:8px;">
+        <button id="darkToggle" class="dark-toggle-btn" onclick="toggleDarkMode()" title="Toggle dark mode"></button>
+        <button class="new-convo-btn" onclick="newConversation()">New Conversation</button>
+    </div>
+</div>
+
+<!-- Chat -->
+<div class="chat-container" id="chatContainer">
+    <div id="startersSection"></div>
+</div>
+
+<!-- Input -->
+<div class="input-area">
+    <textarea
+        id="messageInput"
+        class="input-field"
+        placeholder="Type your message…"
+        rows="1"
+        onkeydown="handleKeyDown(event)"
+        oninput="autoResize(this)"
+    ></textarea>
+    <button class="send-btn" id="sendBtn" onclick="sendMessage()" title="Send message">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+            <line x1="22" y1="2" x2="11" y2="13"></line>
+            <polygon points="22 2 15 22 11 13 2 9 22 2"></polygon>
+        </svg>
+    </button>
+</div>
+
+<script>
+    let history = [];
+    let busy = false;
+    let lastSentText = '';
+    let apiController = null;
+    let timedOut = false;
+
+    function autoResize(el) {
+        el.style.height = 'auto';
+        el.style.height = Math.min(el.scrollHeight, 110) + 'px';
+    }
+
+    function handleKeyDown(e) {
+        if (e.key === 'Enter' && !e.shiftKey) {
+            e.preventDefault();
+            sendMessage();
+        }
+    }
+
+    function scrollToBottom() {
+        const c = document.getElementById('chatContainer');
+        requestAnimationFrame(() => { c.scrollTop = c.scrollHeight; });
+    }
+
+    function removeStarters() {
+        const s = document.getElementById('startersSection');
+        if (s) s.remove();
+    }
+
+    function appendMessage(text, role, isError) {
+        const container = document.getElementById('chatContainer');
+
+        const row = document.createElement('div');
+        row.className = `message-row ${role}`;
+
+        if (role === 'tutor') {
+            const av = document.createElement('div');
+            av.className = 'tutor-avatar-sm';
+            av.textContent = 'S';
+            row.appendChild(av);
+        }
+
+        const bubble = document.createElement('div');
+        bubble.className = `bubble ${role}${isError ? ' error-bubble' : ''}`;
+        bubble.textContent = text;
+        row.appendChild(bubble);
+
+        container.appendChild(row);
+        scrollToBottom();
+        return row;
+    }
+
+    function showTyping() {
+        const container = document.getElementById('chatContainer');
+        const row = document.createElement('div');
+        row.id = 'typingRow';
+        row.className = 'message-row tutor';
+
+        const av = document.createElement('div');
+        av.className = 'tutor-avatar-sm';
+        av.textContent = 'S';
+
+        const bubble = document.createElement('div');
+        bubble.className = 'typing-bubble';
+        bubble.innerHTML = '<div class="typing-dot"></div><div class="typing-dot"></div><div class="typing-dot"></div>';
+
+        row.appendChild(av);
+        row.appendChild(bubble);
+        container.appendChild(row);
+        scrollToBottom();
+    }
+
+    function hideTyping() {
+        const row = document.getElementById('typingRow');
+        if (row) row.remove();
+    }
+
+    async function callAPI(userText) {
+        history.push({ role: 'user', content: userText });
+
+        apiController = new AbortController();
+
+        const res = await fetch('/api/chat', {
+            method: 'POST',
+            signal: apiController.signal,
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ messages: history })
+        });
+
+        apiController = null;
+
+        if (!res.ok) {
+            const err = await res.json().catch(() => ({}));
+            throw new Error(err?.error?.message || `HTTP ${res.status}`);
+        }
+
+        const data = await res.json();
+        const reply = data.content[0].text;
+        history.push({ role: 'assistant', content: reply });
+        return reply;
+    }
+
+    function updateTypingToWaiting() {
+        const bubble = document.querySelector('#typingRow .typing-bubble');
+        if (bubble) {
+            bubble.style.padding = '10px 14px';
+            bubble.innerHTML = '<span style="font-size:13px;color:#78716C;">Sensei is thinking extra hard! Please wait…</span>';
+        }
+    }
+
+    function showTimeoutError() {
+        const container = document.getElementById('chatContainer');
+        const row = document.createElement('div');
+        row.id = 'timeoutErrorRow';
+        row.className = 'message-row tutor';
+
+        const av = document.createElement('div');
+        av.className = 'tutor-avatar-sm';
+        av.textContent = 'S';
+
+        const bubble = document.createElement('div');
+        bubble.className = 'bubble timeout-bubble';
+        bubble.innerHTML = `
+            <span>Something went wrong. Let's try again.</span>
+            <button class="retry-btn" onclick="retryLastMessage()">↩ Retry</button>`;
+
+        row.appendChild(av);
+        row.appendChild(bubble);
+        container.appendChild(row);
+        scrollToBottom();
+    }
+
+    async function doApiCall(text) {
+        busy = true;
+        timedOut = false;
+        document.getElementById('sendBtn').disabled = true;
+        showTyping();
+
+        const t10 = setTimeout(updateTypingToWaiting, 10000);
+        const t20 = setTimeout(() => {
+            timedOut = true;
+            if (apiController) apiController.abort();
+            hideTyping();
+            showTimeoutError();
+        }, 20000);
+
+        try {
+            const reply = await callAPI(text);
+            clearTimeout(t10);
+            clearTimeout(t20);
+            hideTyping();
+            appendMessage(reply, 'tutor', false);
+        } catch (err) {
+            clearTimeout(t10);
+            clearTimeout(t20);
+            history.pop(); // remove the unpaired user turn
+            if (!timedOut) {
+                hideTyping();
+                appendMessage('Sorry, I had trouble connecting. Please check your connection and try again! 😊', 'tutor', true);
+                console.error('[Sensei API error]', err);
+            }
+        } finally {
+            busy = false;
+            document.getElementById('sendBtn').disabled = false;
+            document.getElementById('messageInput').focus();
+        }
+    }
+
+    function retryLastMessage() {
+        const errRow = document.getElementById('timeoutErrorRow');
+        if (errRow) errRow.remove();
+        doApiCall(lastSentText);
+    }
+
+    async function sendMessage() {
+        if (busy) return;
+
+        const input = document.getElementById('messageInput');
+        const text = input.value.trim();
+        if (!text) return;
+
+        removeStarters();
+        input.value = '';
+        input.style.height = 'auto';
+
+        lastSentText = text;
+        appendMessage(text, 'student', false);
+        doApiCall(text);
+    }
+
+    /* ── Dynamic conversation starters ── */
+    const TOPIC_STARTERS = {
+        greetings: [
+            { emoji: '👋', label: 'Practice meeting someone new',  prompt: "Let's practice introducing ourselves in English." },
+            { emoji: '🗣️', label: 'Practice everyday small talk',  prompt: 'Can we practice everyday small talk in English?' },
+        ],
+        food: [
+            { emoji: '🍽️', label: "Let's order at a restaurant",   prompt: "Let's practice ordering at a restaurant in English." },
+            { emoji: '🧑‍🍳', label: 'Describe your favourite food',  prompt: 'I want to describe my favourite foods in English.' },
+        ],
+        travel: [
+            { emoji: '✈️', label: 'Plan a trip with me in English', prompt: "Let's plan a trip together in English." },
+            { emoji: '🗺️', label: 'Practice asking for directions', prompt: 'Can we practice asking for directions in English?' },
+        ],
+        business: [
+            { emoji: '💼', label: 'Role-play a work meeting',       prompt: "Let's role-play a business meeting in English." },
+            { emoji: '📧', label: 'Write a professional email',     prompt: 'Can you help me write a professional email in English?' },
+        ],
+    };
+
+    const DEFAULT_STARTERS = [
+        { emoji: '📅', label: 'Tell me about your day',        prompt: 'Tell me about your day.' },
+        { emoji: '🍜', label: "Let's practice ordering food",  prompt: "Let's practice ordering food in English." },
+        { emoji: '🙋', label: 'Help me introduce myself',      prompt: 'Help me introduce myself in English.' },
+        { emoji: '✈️', label: 'I need travel phrases',         prompt: 'I need some useful travel phrases in English.' },
+    ];
+
+    const UNIVERSAL_FALLBACKS = [
+        { emoji: '📅', label: 'Tell me about your day',   prompt: 'Tell me about your day.' },
+        { emoji: '🙋', label: 'Help me introduce myself', prompt: 'Help me introduce myself in English.' },
+    ];
+
+    const TOPIC_LABELS = { greetings: 'Greetings', food: 'Food', travel: 'Travel', business: 'Business' };
+
+    // Holds the active starter list so onclick handlers can reference by index,
+    // avoiding any string-escaping issues inside HTML attributes.
+    let activeStarters = [];
+
+    function buildStartersHTML() {
+        const recent        = localStorage.getItem('sensei_last_studied_topic');
+        const topicStarters = recent && TOPIC_STARTERS[recent];
+
+        activeStarters = topicStarters
+            ? [...topicStarters, ...UNIVERSAL_FALLBACKS]
+            : DEFAULT_STARTERS;
+
+        const subtitle = topicStarters
+            ? `You've been practising <strong>${TOPIC_LABELS[recent]}</strong> vocabulary — here are some ideas to try out what you've learned:`
+            : 'Your personal English tutor. Choose a topic below or type your own message to begin!';
+
+        const label = topicStarters ? 'Suggested for you ✨' : 'Quick starters';
+
+        const buttons = activeStarters.map((s, i) =>
+            `<button class="starter-btn" onclick="sendStarter(activeStarters[${i}].prompt)">${s.emoji} ${s.label}</button>`
+        ).join('');
+
+        return `
+            <div class="welcome-section">
+                <span class="welcome-emoji">👋</span>
+                <div class="welcome-title">Hi! I'm Sensei</div>
+                <div class="welcome-subtitle">${subtitle}</div>
+            </div>
+            <div class="starters-wrapper">
+                <span class="starters-label">${label}</span>
+                <div class="starters-grid">${buttons}</div>
+            </div>`;
+    }
+
+    function renderStarters() {
+        const section = document.getElementById('startersSection');
+        if (section) section.innerHTML = buildStartersHTML();
+    }
+
+    function sendStarter(text) {
+        const input = document.getElementById('messageInput');
+        input.value = text;
+        autoResize(input);
+        sendMessage();
+    }
+
+    function newConversation() {
+        history = [];
+        document.getElementById('chatContainer').innerHTML = '<div id="startersSection"></div>';
+        renderStarters();
+        document.getElementById('messageInput').focus();
+    }
+
+    renderStarters();
+    document.getElementById('messageInput').focus();
+
+    /* ── Dark mode ── */
+    const MOON_SVG = `<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>`;
+    const SUN_SVG  = `<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="5"/><line x1="12" y1="2" x2="12" y2="4"/><line x1="12" y1="20" x2="12" y2="22"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="2" y1="12" x2="4" y2="12"/><line x1="20" y1="12" x2="22" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg>`;
+
+    function toggleDarkMode() {
+        const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
+        if (isDark) {
+            document.documentElement.removeAttribute('data-theme');
+            localStorage.setItem('sensei_dark_mode', 'light');
+        } else {
+            document.documentElement.setAttribute('data-theme', 'dark');
+            localStorage.setItem('sensei_dark_mode', 'dark');
+        }
+        syncDarkModeIcon();
+    }
+
+    function syncDarkModeIcon() {
+        const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
+        const btn = document.getElementById('darkToggle');
+        if (btn) btn.innerHTML = isDark ? SUN_SVG : MOON_SVG;
+    }
+
+    syncDarkModeIcon();
+</script>
+<script>
+    if ('serviceWorker' in navigator) {
+        navigator.serviceWorker.register('./sw.js').catch(() => {});
+    }
+</script>
+</body>
+</html>
